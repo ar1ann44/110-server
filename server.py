@@ -85,10 +85,29 @@ products = [
 def greett(name):
     return f"Hello {name}", HTTPStatus.OK
 
-# GET http://127.0.1:5000/api/products
+# GET http://127.0.1:5000/api/products?price=0&category=all
 @app.route('/api/products', methods=["GET"])
 def get_products():
-    return jsonify({"data": products}), HTTPStatus.OK 
+    price = request.args.get("price")
+    print(f"price: {price}")
+    
+    category = request.args.get("category")
+    print(f"category: {category}")
+    
+    if not request.args: 
+        return jsonify({"data": products}), HTTPStatus.OK 
+    else:
+        filtered_products = []
+        
+        for product in products:
+            if product["category"].lower() == category.lower() and product["price"] < float(price):
+                filtered_products.append(product)
+            
+        return jsonify({
+            "success": True,
+            "message": "products retrieved successfully",
+            "data": filtered_products
+        }), HTTPStatus.OK
 
 # GET http://127.0.1:5000/api/products/2
 @app.route('/api/products/<string:product_id>', methods=["GET"])
@@ -120,14 +139,52 @@ def create_product():
         "data": new_product
     }), HTTPStatus.CREATED  #201
 
+#PUT http://127.0.0.1:5000/api/products
+
+@app.route('/api/products/<string:product_id>', methods=["PUT"])
+def update_product(product_id):
+    updated_product = request.get_json()
+    print(updated_product)
+    for product in products:
+        if product["id"] == product_id:
+            product["title"] = updated_product.get("title", product["title"])
+            product["price"] = updated_product.get("price", product["price"])
+            product["category"] = updated_product.get("category", product["category"])
+            product["image"] = updated_product.get("image", product["image"])
+            return jsonify({
+                "success": True,
+                "message": "product updated successfully",
+                "data": product
+            }), HTTPStatus.OK  #200
+            
+    return jsonify({
+        "success": False,
+        "message": "product not found"
+    }), HTTPStatus.NOT_FOUND #404
 
 
+#DELETE http://127.0.1:5000/api/products/2
+@app.route('/api/products/<string:product_id>', methods=["DELETE"])
+def delete_product(product_id):
+    for product in products:
+        if product["id"] == product_id:
+            products.remove(product)
+            return jsonify({
+                    "success": True,
+                    "message": "product deleted successfully",
+                    }), HTTPStatus.OK  #200
+            # httpStatus.NO_CONTENT we can use it but just when me dont need to return info
+
+    return jsonify({
+        "success": False,
+        "message": "product not found"
+    }), HTTPStatus.NOT_FOUND #404
 
 #------- coupons --------
 coupons = [
-    {"_id": 1, "code": "WELCOME10", "discount": 10},
-    {"_id": 2, "code": "SPOOKY25", "discount": 25},
-    {"_id": 3, "code": "VIP50", "discount": 50}
+    {"id": "1", "code": "WELCOME10", "discount": 10},
+    {"id": "2", "code": "SPOOKY25", "discount": 25},
+    {"id": "3", "code": "VIP50", "discount": 50}
 ]
 
 @app.route('/api/coupons', methods=["GET"])
@@ -139,11 +196,37 @@ def get_coupons_count():
     count = len(coupons)
     return {"count": count}, HTTPStatus.OK
     
+    
+@app.route('/api/coupons/<string:coupon_id>', methods=["GET"])
+def get_coupon_by_id(coupon_id):
+    for coupon in coupons:
+        if coupon["id"] == coupon_id:
+            return jsonify({
+                "success": True,
+                "message": "coupon retrieved successfully",
+                "data": coupon
+                }), HTTPStatus.OK
+
+    return jsonify({
+        "success": False,
+        "message": "coupon not found"
+    }), HTTPStatus.NOT_FOUND
+
+
+@app.route('/api/coupons', methods=["POST"])
+def create_coupon():
+    print(f"request information {request.get_json()}")
+    new_coupon = request.get_json()
+    new_coupon["id"] = str(uuid.uuid4())
+    coupons.append(new_coupon)
+    return jsonify({
+        "success": True,
+        "message": "coupon successfully added",
+        "data": new_coupon
+    }), HTTPStatus.CREATED  #201
+
 
 if __name__ == "__main__":
     app.run(debug=True) # run the server in debug mode
     #when this file is run directly: __name__ == "__main__"
     #when this file is imported as a module: __name__ == "server.py"
-    
-    
-

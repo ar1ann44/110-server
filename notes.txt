@@ -2,7 +2,6 @@
 WIN py/python -m venv venv
 MAC python3 -m venv venv 
 
-
 --- Activate venv ---
 WIN venv\Scripts\activate
 MAC source venv/bin/activate 
