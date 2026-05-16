@@ -225,6 +225,40 @@ def create_coupon():
         "data": new_coupon
     }), HTTPStatus.CREATED  #201
 
+@app.route('/api/coupons/<int:coupon_id>', methods=["PUT"])
+def update_coupon(coupon_id):
+    updated_data = request.get_json()
+    for coupon in coupons:
+        if coupon["id"] == str(coupon_id):
+            coupon["code"] = updated_data.get("code", coupon["code"])
+            coupon["discount"] = updated_data.get("discount", coupon["discount"])
+            return jsonify({
+                "success": True,
+                "message": "coupon updated successfully",
+                "data": coupon
+            }), HTTPStatus.OK
+
+    return jsonify({
+        "success": False,
+        "message": "coupon not found"
+    }), HTTPStatus.NOT_FOUND
+
+
+@app.route('/api/coupons/<int:coupon_id>', methods=["DELETE"])
+def delete_coupon(coupon_id):
+    for coupon in coupons:
+        if coupon["id"] == str(coupon_id):
+            coupons.remove(coupon)
+            return jsonify({
+                "success": True,
+                "message": "coupon deleted successfully"
+            }), HTTPStatus.OK
+
+    return jsonify({
+        "success": False,
+        "message": "coupon not found"
+    }), HTTPStatus.NOT_FOUND
+
 
 if __name__ == "__main__":
     app.run(debug=True) # run the server in debug mode
